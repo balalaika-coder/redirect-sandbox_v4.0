@@ -1,0 +1,29 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<h1>Import Redirects from CSV</h1>
+
+<p>Upload a CSV file with the following columns:</p>
+<ul>
+  <li><code>site_slug</code> — required</li>
+  <li><code>source</code> — required (must start with /)</li>
+  <li><code>destination</code> — required</li>
+  <li><code>status_code</code> — optional (default: 301)</li>
+  <li><code>match_type</code> — optional (default: exact)</li>
+  <li><code>geo_aware</code> — optional (true/false, default: false)</li>
+  <li><code>priority</code> — optional (default: 0)</li>
+  <li><code>utm_source</code>, <code>utm_medium</code>, <code>utm_campaign</code> — optional</li>
+  <li><code>notes</code> — optional</li>
+</ul>
+
+<p><strong>Note:</strong> This tool uses <strong>upsert behavior</strong>. If a redirect with the same site + source already exists, it will be <strong>updated</strong>. Otherwise, a new redirect is created.</p>
+
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  <input type="file" name="csv_file" accept=".csv" required>
+  <button type="submit">Upload</button>
+</form>
+
+<p><a href="{% url 'admin:redirects_django_redirect_changelist' %}">← Back to redirects</a></p>
+{% endblock %}
+

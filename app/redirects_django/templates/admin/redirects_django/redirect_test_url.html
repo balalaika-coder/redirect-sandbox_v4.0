@@ -1,0 +1,72 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<h1>Test URL Redirect Resolution</h1>
+
+<form method="post">
+  {% csrf_token %}
+  
+  <p>
+    <label for="site">Site:</label>
+    <select name="site" id="site" required>
+      <option value="">-- Select a site --</option>
+      {% for site in sites %}
+        <option value="{{ site.id }}">{{ site.domain }}</option>
+      {% endfor %}
+    </select>
+  </p>
+  
+  <p>
+    <label for="path">Path:</label>
+    <input type="text" name="path" id="path" placeholder="/old-page" required>
+  </p>
+  
+  <p>
+    <label for="country">Country Code (optional):</label>
+    <input type="text" name="country" id="country" placeholder="US" maxlength="2">
+    <small>ISO 3166-1 alpha-2 (e.g., US, DE, JP). Used for geo-aware redirects.</small>
+  </p>
+  
+  <button type="submit">Test</button>
+</form>
+
+{% if result %}
+  <h2>Result</h2>
+  
+  {% if result.error %}
+    <p style="color: red;">{{ result.error }}</p>
+  {% else %}
+    <table border="1" cellpadding="8" cellspacing="0">
+      <tr>
+        <th>Match Type</th>
+        <td>{{ result.match_type }}</td>
+      </tr>
+      <tr>
+        <th>Source</th>
+        <td><code>{{ result.source }}</code></td>
+      </tr>
+      <tr>
+        <th>Destination</th>
+        <td><code>{{ result.destination }}</code></td>
+      </tr>
+      <tr>
+        <th>Status Code</th>
+        <td>{{ result.status_code }}</td>
+      </tr>
+      <tr>
+        <th>Geo-Aware</th>
+        <td>{{ result.geo_aware|yesno:"Yes,No" }}</td>
+      </tr>
+      {% if result.geo_info %}
+      <tr>
+        <th>Geo Info</th>
+        <td>{{ result.geo_info }}</td>
+      </tr>
+      {% endif %}
+    </table>
+  {% endif %}
+{% endif %}
+
+<p><a href="{% url 'admin:redirects_django_redirect_changelist' %}">← Back to redirects</a></p>
+{% endblock %}
+
