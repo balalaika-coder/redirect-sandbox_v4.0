@@ -106,6 +106,18 @@
       args:
         executable: /bin/bash
 
+    # ── Permissions for Nginx ───────────────────────────────
+    - name: Ensure Nginx can traverse the home directory
+      file:
+        path: /home/ubuntu
+        mode: '0711'
+
+    - name: Ensure Nginx can read static files
+      file:
+        path: "{{ app_dir }}"
+        mode: '0755'
+        recurse: yes
+
     # ── Gunicorn systemd service ────────────────────────────
     - name: Create Gunicorn systemd service
       copy:
