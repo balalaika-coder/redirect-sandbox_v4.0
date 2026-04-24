@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Page</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+        .banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+        .banner h1 { font-size: 2.5rem; margin-bottom: 1rem; }
+        .banner p { font-size: 1.2rem; opacity: 0.9; }
+        .content {
+            max-width: 800px;
+            margin: 3rem auto;
+            padding: 0 2rem;
+        }
+        .info-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+        .url { 
+            font-family: 'Monaco', 'Courier New', monospace;
+            background: #e9ecef;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            display: inline-block;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="banner">
+        <h1>🏠 Home Page</h1>
+        <p>You were NOT redirected — origin served this page</p>
+    </div>
+    
+    <div class="content">
+        <div class="info-box">
+            <h2>Current URL</h2>
+            <div class="url" id="current-url"></div>
+        </div>
+        
+        <h2>What does this mean?</h2>
+        <p>If you see this page, one of the following is true:</p>
+        <ul style="margin: 1rem 0 1rem 2rem; line-height: 1.8;">
+            <li>No redirect rule matched your request</li>
+            <li>The Lambda@Edge function passed your request through to the origin</li>
+            <li>You accessed the root path (<code>/</code>) directly</li>
+        </ul>
+        
+        <div class="info-box">
+            <h3>Try these test URLs:</h3>
+            <ul style="margin: 1rem 0 0 2rem; line-height: 1.8;">
+                <li><code>/promo</code> — Geo-aware vanity redirect</li>
+                <li><code>/old-product</code> — Simple 301 redirect</li>
+                <li><code>/legacy/.*</code> — Regex pattern redirect</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById('current-url').textContent = window.location.href;
+    </script>
+</body>
+</html>

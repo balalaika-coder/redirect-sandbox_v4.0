@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home — en-us</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+        .banner {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+        .banner h1 { font-size: 2.5rem; margin-bottom: 1rem; }
+        .banner .locale {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-top: 1rem;
+        }
+        .content {
+            max-width: 800px;
+            margin: 3rem auto;
+            padding: 0 2rem;
+        }
+        .url { 
+            font-family: 'Monaco', 'Courier New', monospace;
+            background: #e9ecef;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            display: inline-block;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="banner">
+        <h1>🇺🇸 Home — English (US)</h1>
+        <div class="locale">Locale: en-us</div>
+    </div>
+    
+    <div class="content">
+        <h2>Success!</h2>
+        <p style="margin: 1rem 0; line-height: 1.6;">
+            You landed on the English (US) version of the home page. This likely means:
+        </p>
+        <ul style="margin: 1rem 0 1rem 2rem; line-height: 1.8;">
+            <li>A geo-aware redirect routed you here based on your country (US, CA, etc.)</li>
+            <li>Or you accessed this path directly</li>
+        </ul>
+        
+        <div style="background: #f8f9fa; padding: 1.5rem; margin: 2rem 0; border-left: 4px solid #11998e;">
+            <h3>Current URL</h3>
+            <div class="url" id="current-url"></div>
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById('current-url').textContent = window.location.href;
+    </script>
+</body>
+</html>

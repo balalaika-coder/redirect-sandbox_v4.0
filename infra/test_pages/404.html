@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 — Not Found</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+        .banner {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+        .banner h1 { font-size: 3rem; margin-bottom: 1rem; }
+        .banner p { font-size: 1.2rem; opacity: 0.9; }
+        .content {
+            max-width: 800px;
+            margin: 3rem auto;
+            padding: 0 2rem;
+            text-align: center;
+        }
+        .url { 
+            font-family: 'Monaco', 'Courier New', monospace;
+            background: #f8d7da;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            display: inline-block;
+            margin: 1rem 0;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="banner">
+        <h1>404</h1>
+        <p>Page Not Found</p>
+    </div>
+    
+    <div class="content">
+        <h2>No redirect matched your request</h2>
+        <p style="margin: 1rem 0; line-height: 1.6;">
+            The Lambda@Edge function found no matching redirect rule and passed your request to the origin.
+            The origin (S3) does not have a file at this path, so you see this 404 page.
+        </p>
+        
+        <div style="background: #f8d7da; padding: 1.5rem; margin: 2rem 0; border-left: 4px solid #eb3349;">
+            <h3>Requested URL</h3>
+            <div class="url" id="current-url"></div>
+        </div>
+        
+        <p style="margin-top: 2rem;">
+            <a href="/" style="color: #eb3349; text-decoration: none; font-weight: bold;">← Back to Home</a>
+        </p>
+    </div>
+    
+    <script>
+        document.getElementById('current-url').textContent = window.location.href;
+    </script>
+</body>
+</html>
