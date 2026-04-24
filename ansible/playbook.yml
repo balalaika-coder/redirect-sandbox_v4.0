@@ -1,0 +1,209 @@
+---
+- name: Deploy Django Redirect Manager
+  hosts: ec2
+  become: true
+  vars:
+    app_dir: /home/ubuntu/redirect-sandbox
+    venv_dir: /home/ubuntu/redirect-sandbox/app/venv
+    django_dir: /home/ubuntu/redirect-sandbox/app
+
+  tasks:
+    # ── System packages ─────────────────────────────────────
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install system packages
+      apt:
+        name:
+          - python3
+          - python3-venv
+          - python3-pip
+          - python3-dev
+          - nginx
+          - git
+          - postgresql-client
+          - libpq-dev
+          - build-essential
+        state: present
+
+    # ── Clone repository ────────────────────────────────────
+    - name: Clone repository
+      become_user: ubuntu
+      git:
+        repo: "{{ github_repo }}"
+        dest: "{{ app_dir }}"
+        version: main
+        force: yes
+
+    # ── Python virtualenv + dependencies ────────────────────
+    - name: Create virtualenv
+      become_user: ubuntu
+      command: python3 -m venv {{ venv_dir }}
+      args:
+        creates: "{{ venv_dir }}/bin/activate"
+
+    - name: Install Python dependencies
+      become_user: ubuntu
+      pip:
+        requirements: "{{ django_dir }}/requirements.txt"
+        virtualenv: "{{ venv_dir }}"
+
+    # ── Environment file ────────────────────────────────────
+    - name: Create .env file
+      become_user: ubuntu
+      copy:
+        dest: "{{ django_dir }}/.env"
+        content: |
+          DJANGO_SECRET_KEY={{ django_secret_key }}
+          DJANGO_DEBUG={{ django_debug }}
+          DJANGO_ALLOWED_HOSTS={{ django_allowed_hosts }}
+          DB_HOST={{ db_host }}
+          DB_NAME={{ db_name }}
+          DB_USER={{ db_user }}
+          DB_PASSWORD={{ db_password }}
+          DB_PORT={{ db_port }}
+        mode: '0600'
+
+    # ── Load .env in activate script ────────────────────────
+    - name: Add .env loading to virtualenv activate
+      become_user: ubuntu
+      blockinfile:
+        path: "{{ venv_dir }}/bin/activate"
+        block: |
+          # Load Django environment variables
+          set -a
+          source {{ django_dir }}/.env
+          set +a
+        marker: "# {mark} DJANGO ENV"
+
+    # ── Django setup ────────────────────────────────────────
+    - name: Run Django migrations
+      become_user: ubuntu
+      shell: |
+        source {{ venv_dir }}/bin/activate
+        cd {{ django_dir }}
+        python manage.py migrate --noinput
+      args:
+        executable: /bin/bash
+
+    - name: Collect static files
+      become_user: ubuntu
+      shell: |
+        source {{ venv_dir }}/bin/activate
+        cd {{ django_dir }}
+        python manage.py collectstatic --noinput
+      args:
+        executable: /bin/bash
+
+    - name: Create DRF auth token table
+      become_user: ubuntu
+      shell: |
+        source {{ venv_dir }}/bin/activate
+        cd {{ django_dir }}
+        python manage.py migrate authtoken --noinput
+      args:
+        executable: /bin/bash
+
+    # ── Gunicorn systemd service ────────────────────────────
+    - name: Create Gunicorn systemd service
+      copy:
+        dest: /etc/systemd/system/gunicorn.service
+        content: |
+          [Unit]
+          Description=Gunicorn daemon for Django Redirect Manager
+          After=network.target
+
+          [Service]
+          User=ubuntu
+          Group=ubuntu
+          WorkingDirectory=/home/ubuntu/redirect-sandbox/app
+          EnvironmentFile=/home/ubuntu/redirect-sandbox/app/.env
+          ExecStart=/home/ubuntu/redirect-sandbox/app/venv/bin/gunicorn \
+              redirect_project.wsgi:application \
+              --bind 0.0.0.0:8000 \
+              --workers 3 \
+              --timeout 120 \
+              --access-logfile /var/log/gunicorn/access.log \
+              --error-logfile /var/log/gunicorn/error.log
+          Restart=on-failure
+          RestartSec=5
+
+          [Install]
+          WantedBy=multi-user.target
+        mode: '0644'
+
+    - name: Create Gunicorn log directory
+      file:
+        path: /var/log/gunicorn
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'
+
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: yes
+
+    - name: Enable and start Gunicorn
+      systemd:
+        name: gunicorn
+        enabled: yes
+        state: restarted
+
+    # ── nginx reverse proxy ─────────────────────────────────
+    - name: Remove default nginx site
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+
+    - name: Create nginx site config
+      copy:
+        dest: /etc/nginx/sites-available/redirect-manager
+        content: |
+          server {
+              listen 80;
+              server_name _;
+
+              location /static/ {
+                  alias /home/ubuntu/redirect-sandbox/app/staticfiles/;
+              }
+
+              location / {
+                  proxy_pass http://127.0.0.1:8000;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+                  proxy_read_timeout 120;
+              }
+          }
+        mode: '0644'
+
+    - name: Enable nginx site
+      file:
+        src: /etc/nginx/sites-available/redirect-manager
+        dest: /etc/nginx/sites-enabled/redirect-manager
+        state: link
+
+    - name: Test nginx config
+      command: nginx -t
+
+    - name: Restart nginx
+      systemd:
+        name: nginx
+        state: restarted
+
+    # ── Verify services ─────────────────────────────────────
+    - name: Check Gunicorn status
+      command: systemctl is-active gunicorn
+      register: gunicorn_status
+
+    - name: Check nginx status
+      command: systemctl is-active nginx
+      register: nginx_status
+
+    - name: Print service status
+      debug:
+        msg: "Gunicorn: {{ gunicorn_status.stdout }}, nginx: {{ nginx_status.stdout }}"
